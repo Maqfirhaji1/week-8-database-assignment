@@ -1,0 +1,86 @@
+Table tenants {
+  id uuid [pk]
+  name varchar(150) [not null, unique]
+  created_at timestamptz [not null]
+}
+
+Table users {
+  id uuid [pk]
+  tenant_id uuid [not null]
+  full_name varchar(150) [not null]
+  email varchar(255) [not null]
+  password_hash text [not null]
+  role varchar(30) [not null]
+  created_at timestamptz [not null]
+
+  indexes {
+    (tenant_id, email) [unique]
+  }
+}
+
+Table customers {
+  id uuid [pk]
+  tenant_id uuid [not null]
+  full_name varchar(150) [not null]
+  email varchar(255)
+  phone varchar(50)
+  created_at timestamptz [not null]
+}
+
+Table products {
+  id uuid [pk]
+  tenant_id uuid [not null]
+  name varchar(200) [not null]
+  sku varchar(100) [not null]
+  price numeric(12,2) [not null]
+  stock_quantity integer [not null]
+  attributes jsonb
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    (tenant_id, sku) [unique]
+  }
+}
+
+Table orders {
+  id uuid [pk]
+  tenant_id uuid [not null]
+  customer_id uuid [not null]
+  status varchar(30) [not null]
+  total_amount numeric(12,2) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table order_items {
+  id uuid [pk]
+  tenant_id uuid [not null]
+  order_id uuid [not null]
+  product_id uuid [not null]
+  quantity integer [not null]
+  unit_price numeric(12,2) [not null]
+  subtotal numeric(12,2) [not null]
+}
+
+Table audit_log {
+  id bigint [pk, increment]
+  tenant_id uuid
+  table_name text [not null]
+  operation text [not null]
+  old_row jsonb
+  new_row jsonb
+  changed_by text
+  changed_at timestamptz [not null]
+}
+
+Ref: tenants.id < users.tenant_id
+Ref: tenants.id < customers.tenant_id
+Ref: tenants.id < products.tenant_id
+Ref: tenants.id < orders.tenant_id
+Ref: tenants.id < order_items.tenant_id
+Ref: tenants.id < audit_log.tenant_id
+
+Ref: customers.id < orders.customer_id
+Ref: orders.id < order_items.order_id
+Ref: products.id < order_items.product_id
